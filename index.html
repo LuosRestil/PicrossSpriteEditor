@@ -74,7 +74,7 @@
       let backgroundColor = "lightgrey";
       let borderColor = "black";
       let pixelColor = "black";
-      let drawing = erasing = false;
+      let drawing = (erasing = false);
 
       class Canvas {
         constructor(canvas, size, drawBorders = true) {
@@ -137,6 +137,10 @@
           }
         }
       }
+
+      document.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+      });
 
       canvas.addEventListener("mousedown", (evt) => {
         if (evt.altKey || evt.metaKey || evt.button === 2) erasing = true;
