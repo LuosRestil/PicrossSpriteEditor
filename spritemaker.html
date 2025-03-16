@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sprite Maker</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        background-color: slategray;
+      }
+
+      #canvas {
+        border: 5px solid dodgerblue;
+        position: relative;
+        top: 50%;
+        transform: translateY(-50%);
+        margin-left: 50px;
+      }
+
+      button {
+        background-color: orangered;
+        border: none;
+        border-radius: 3px;
+        color: white;
+        font-weight: bold;
+        font-size: 18px;
+        padding: 10px 20px;
+        cursor: pointer;
+
+        &:hover {
+          background-color: rgb(235, 63, 1);
+        }
+
+        &:active {
+          box-shadow: inset 0px 0px 5px rgb(174, 46, 0);
+        }
+      }
+
+      #clear-btn {
+        position: absolute;
+        top: 20px;
+        right: 200px;
+      }
+
+      #print-btn {
+        position: absolute;
+        top: 20px;
+        right: 50px;
+      }
+
+      #preview {
+        position: absolute;
+        top: 100px;
+        right: 50px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+    <canvas id="preview"></canvas>
+    <button id="clear-btn" onclick="clearGrid()">Clear</button>
+    <button id="print-btn" onclick="printGrid()">Print Grid</button>
+    <script>
+      let dim = 15;
+      let backgroundColor = "lightgrey";
+      let borderColor = "black";
+      let pixelColor = "black";
+      let drawing = erasing = false;
+
+      class Canvas {
+        constructor(canvas, size, drawBorders = true) {
+          this.size = size;
+          canvas.width = canvas.height = this.size;
+          this.ctx = canvas.getContext("2d");
+          this.cellSize = size / dim;
+          this.drawBorders = drawBorders;
+        }
+
+        clear() {
+          this.ctx.fillStyle = backgroundColor;
+          this.ctx.fillRect(0, 0, this.size, this.size);
+        }
+
+        drawCell(row, col, val) {
+          this.ctx.strokeStyle = borderColor;
+          this.ctx.fillStyle = val ? pixelColor : backgroundColor;
+          this.ctx.fillRect(
+            col * this.cellSize,
+            row * this.cellSize,
+            this.cellSize,
+            this.cellSize
+          );
+          if (this.drawBorders || val) {
+            this.ctx.strokeRect(
+              col * this.cellSize,
+              row * this.cellSize,
+              this.cellSize,
+              this.cellSize
+            );
+          }
+        }
+      }
+
+      const mainCanvas = new Canvas(canvas, window.innerHeight * 0.8);
+      const previewCanvas = new Canvas(preview, 200, false);
+
+      const canvases = [mainCanvas, previewCanvas];
+
+      let grid =
+        localStorage
+          .getItem("grid")
+          ?.split(",")
+          .map((num) => parseInt(num)) ?? Array(dim * dim).fill(0);
+
+      let mouse = { x: 0, y: 0 };
+
+      requestAnimationFrame(loop);
+
+      function loop() {
+        requestAnimationFrame(loop);
+
+        for (let c of canvases) {
+          c.clear();
+          for (let i = 0; i < grid.length; i++) {
+            let row = Math.floor(i / dim);
+            let col = i % dim;
+            c.drawCell(row, col, grid[i]);
+          }
+        }
+      }
+
+      canvas.addEventListener("mousedown", (evt) => {
+        if (evt.altKey || evt.metaKey || evt.button === 2) erasing = true;
+        else drawing = true;
+
+        handleDrawErase();
+      });
+
+      canvas.addEventListener("mouseup", (evt) => {
+        drawing = erasing = false;
+      });
+
+      canvas.addEventListener("mousemove", (evt) => {
+        mouse.x = evt.offsetX;
+        mouse.y = evt.offsetY;
+        handleDrawErase();
+      });
+
+      function handleDrawErase() {
+        const row = Math.floor(mouse.y / mainCanvas.cellSize);
+        const col = Math.floor(mouse.x / mainCanvas.cellSize);
+        const idx = row * dim + col;
+        if (drawing) grid[idx] = 1;
+        else if (erasing) grid[idx] = 0;
+        localStorage.setItem("grid", grid);
+      }
+
+      function clearGrid() {
+        grid = new Array(dim * dim).fill(0);
+        localStorage.setItem("grid", grid);
+      }
+
+      function printGrid() {
+        console.log(`{${grid.join(",")}}`);
+      }
+    </script>
+  </body>
+</html>
